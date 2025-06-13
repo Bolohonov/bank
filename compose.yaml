@@ -1,1 +1,302 @@
 services:
+  config-service:
+    build:
+      context: ./configService
+      dockerfile: Dockerfile
+    ports:
+      - "${CONFIG_SERVER_PORT}:${CONFIG_SERVER_PORT}"
+    environment:
+      CONFIG_SERVER_PORT: ${CONFIG_SERVER_PORT}
+    networks:
+      - postgres_network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:${CONFIG_SERVER_PORT}/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  eureka-service-discovery:
+    build:
+      context: ./eurekaServiceDiscovery
+      dockerfile: Dockerfile
+    ports:
+      - "${EUREKA_SERVER_PORT}:${EUREKA_SERVER_PORT}"
+    environment:
+      EUREKA_SERVER_PORT: ${EUREKA_SERVER_PORT}
+      CONFIG_SERVER_URL: ${CONFIG_SERVER_URL}
+    depends_on:
+      config-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:${EUREKA_SERVER_PORT}/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - postgres_network
+
+  notifications-service:
+    build:
+      context: ./notificationsService
+      dockerfile: Dockerfile
+    ports:
+      - "${NOTIFICATIONS_SERVER_PORT}:${NOTIFICATIONS_SERVER_PORT}"
+    environment:
+      DATASOURCE_URL: ${DATASOURCE_URL}
+      DATASOURCE_USERNAME: ${DATASOURCE_USERNAME}
+      DATASOURCE_PASSWORD: ${DATASOURCE_PASSWORD}
+      NOTIFICATIONS_SERVER_PORT: ${NOTIFICATIONS_SERVER_PORT}
+      EUREKA_SERVER_PORT: ${EUREKA_SERVER_PORT}
+      EUREKA_ZONE: ${EUREKA_ZONE}
+      CONFIG_SERVER_URL: ${CONFIG_SERVER_URL}
+      GATEWAY_SERVER_URL: ${GATEWAY_SERVER_URL}
+      KEYCLOAK_TOKEN_URL: ${KEYCLOAK_TOKEN_URL}
+      KEYCLOAK_ISSUER_URL: ${KEYCLOAK_ISSUER_URL}
+    depends_on:
+      config-service:
+        condition: service_healthy
+      eureka-service-discovery:
+        condition: service_healthy
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - postgres_network
+
+  accounts-application:
+    build:
+      context: ./accountService
+      dockerfile: Dockerfile
+    ports:
+      - "${ACCOUNTS_SERVER_PORT}:${ACCOUNTS_SERVER_PORT}"
+    environment:
+      DATASOURCE_URL: ${DATASOURCE_URL}
+      DATASOURCE_USERNAME: ${DATASOURCE_USERNAME}
+      DATASOURCE_PASSWORD: ${DATASOURCE_PASSWORD}
+      ACCOUNTS_SERVER_PORT: ${ACCOUNTS_SERVER_PORT}
+      EUREKA_ZONE: ${EUREKA_ZONE}
+      CONFIG_SERVER_URL: ${CONFIG_SERVER_URL}
+      GATEWAY_SERVER_URL: ${GATEWAY_SERVER_URL}
+      KEYCLOAK_TOKEN_URL: ${KEYCLOAK_TOKEN_URL}
+      KEYCLOAK_ISSUER_URL: ${KEYCLOAK_ISSUER_URL}
+    depends_on:
+      config-service:
+        condition: service_healthy
+      eureka-service-discovery:
+        condition: service_healthy
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - postgres_network
+
+  bank-ui:
+    build:
+      context: ./bankUI
+      dockerfile: Dockerfile
+    ports:
+      - "${BANK_UI_SERVER_PORT}:${BANK_UI_SERVER_PORT}"
+    environment:
+      BANK_UI_SERVER_PORT: ${BANK_UI_SERVER_PORT}
+      EUREKA_ZONE: ${EUREKA_ZONE}
+      CONFIG_SERVER_URL: ${CONFIG_SERVER_URL}
+      GATEWAY_SERVER_URL: ${GATEWAY_SERVER_URL}
+      KEYCLOAK_TOKEN_URL: ${KEYCLOAK_TOKEN_URL}
+      KEYCLOAK_ISSUER_URL: ${KEYCLOAK_ISSUER_URL}
+    depends_on:
+      config-service:
+        condition: service_healthy
+      eureka-service-discovery:
+        condition: service_healthy
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - postgres_network
+
+  blocker-application:
+    build:
+      context: ./blockerService
+      dockerfile: Dockerfile
+    ports:
+      - "${BLOCKER_SERVER_PORT}:${BLOCKER_SERVER_PORT}"
+    environment:
+      BLOCKER_SERVER_PORT: ${BLOCKER_SERVER_PORT}
+      EUREKA_ZONE: ${EUREKA_ZONE}
+      CONFIG_SERVER_URL: ${CONFIG_SERVER_URL}
+      KEYCLOAK_TOKEN_URL: ${KEYCLOAK_TOKEN_URL}
+      KEYCLOAK_ISSUER_URL: ${KEYCLOAK_ISSUER_URL}
+      GATEWAY_SERVER_URL: ${GATEWAY_SERVER_URL}
+    depends_on:
+      config-service:
+        condition: service_healthy
+      eureka-service-discovery:
+        condition: service_healthy
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - postgres_network
+
+  exchange-service:
+    build:
+      context: ./exchangeService
+      dockerfile: Dockerfile
+    ports:
+      - "${EXCHANGE_SERVER_PORT}:${EXCHANGE_SERVER_PORT}"
+    environment:
+      DATASOURCE_URL: ${DATASOURCE_URL}
+      DATASOURCE_USERNAME: ${DATASOURCE_USERNAME}
+      DATASOURCE_PASSWORD: ${DATASOURCE_PASSWORD}
+      EXCHANGE_SERVER_PORT: ${EXCHANGE_SERVER_PORT}
+      EUREKA_ZONE: ${EUREKA_ZONE}
+      CONFIG_SERVER_URL: ${CONFIG_SERVER_URL}
+      KEYCLOAK_TOKEN_URL: ${KEYCLOAK_TOKEN_URL}
+      KEYCLOAK_ISSUER_URL: ${KEYCLOAK_ISSUER_URL}
+      GATEWAY_SERVER_URL: ${GATEWAY_SERVER_URL}
+    depends_on:
+      config-service:
+        condition: service_healthy
+      eureka-service-discovery:
+        condition: service_healthy
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - postgres_network
+
+  exchange-generator-service:
+    build:
+      context: ./exchangeGeneratorService
+      dockerfile: Dockerfile
+    ports:
+      - "${EXCHANGE_GENEGATOR_SERVER_PORT}:${EXCHANGE_GENEGATOR_SERVER_PORT}"
+    environment:
+      EXCHANGE_GENEGATOR_SERVER_PORT: ${EXCHANGE_GENEGATOR_SERVER_PORT}
+      EUREKA_ZONE: ${EUREKA_ZONE}
+      CONFIG_SERVER_URL: ${CONFIG_SERVER_URL}
+      KEYCLOAK_TOKEN_URL: ${KEYCLOAK_TOKEN_URL}
+      KEYCLOAK_ISSUER_URL: ${KEYCLOAK_ISSUER_URL}
+      GATEWAY_SERVER_URL: ${GATEWAY_SERVER_URL}
+    depends_on:
+      config-service:
+        condition: service_healthy
+      eureka-service-discovery:
+        condition: service_healthy
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - postgres_network
+
+  cash-application:
+    build:
+      context: ./cashService
+      dockerfile: Dockerfile
+    ports:
+      - "${CASH_SERVER_PORT}:${CASH_SERVER_PORT}"
+    environment:
+      CASH_SERVER_PORT: ${CASH_SERVER_PORT}
+      EUREKA_ZONE: ${EUREKA_ZONE}
+      CONFIG_SERVER_URL: ${CONFIG_SERVER_URL}
+      KEYCLOAK_TOKEN_URL: ${KEYCLOAK_TOKEN_URL}
+      KEYCLOAK_ISSUER_URL: ${KEYCLOAK_ISSUER_URL}
+      GATEWAY_SERVER_URL: ${GATEWAY_SERVER_URL}
+    depends_on:
+      config-service:
+        condition: service_healthy
+      eureka-service-discovery:
+        condition: service_healthy
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - postgres_network
+
+  transfer-application:
+    build:
+      context: ./transferService
+      dockerfile: Dockerfile
+    ports:
+      - "${TRANSFER_SERVER_PORT}:${TRANSFER_SERVER_PORT}"
+    environment:
+      TRANSFER_SERVER_PORT: ${TRANSFER_SERVER_PORT}
+      EUREKA_ZONE: ${EUREKA_ZONE}
+      CONFIG_SERVER_URL: ${CONFIG_SERVER_URL}
+      KEYCLOAK_TOKEN_URL: ${KEYCLOAK_TOKEN_URL}
+      KEYCLOAK_ISSUER_URL: ${KEYCLOAK_ISSUER_URL}
+      GATEWAY_SERVER_URL: ${GATEWAY_SERVER_URL}
+    depends_on:
+      config-service:
+        condition: service_healthy
+      eureka-service-discovery:
+        condition: service_healthy
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - postgres_network
+
+  gateway-service:
+    build:
+      context: ./gatewayService
+      dockerfile: Dockerfile
+    ports:
+      - "${GATEWAY_SERVER_PORT}:${GATEWAY_SERVER_PORT}"
+    environment:
+      GATEWAY_SERVER_PORT: ${GATEWAY_SERVER_PORT}
+      EUREKA_ZONE: ${EUREKA_ZONE}
+      CONFIG_SERVER_URL: ${CONFIG_SERVER_URL}
+    depends_on:
+      config-service:
+        condition: service_healthy
+      eureka-service-discovery:
+        condition: service_healthy
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - postgres_network
+
+  postgres-db:
+    image: postgres
+    container_name: postgres-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DATASOURCE_USERNAME}
+      POSTGRES_PASSWORD: ${DATASOURCE_PASSWORD}
+      POSTGRES_DB: ${DATASOURCE_DB}
+    ports:
+      - "5433:5432"
+    volumes:
+      - .pg-oper-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATASOURCE_USERNAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      postgres_network:
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - .redis_data:/data
+    networks:
+      - postgres_network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:22.0.1
+    container_name: keycloak
+    restart: unless-stopped
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_HOSTNAME: localhost
+      KC_HTTP_ENABLED: "true"
+    volumes:
+      - ./realm-config.json:/opt/keycloak/data/import/realm-config.json
+    ports:
+      - "8282:8080"
+    networks:
+      - postgres_network
+    command:
+      - start-dev --import-realm
+
+networks:
+  postgres_network:
