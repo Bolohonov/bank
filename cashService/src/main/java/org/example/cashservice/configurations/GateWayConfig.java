@@ -1,4 +1,4 @@
-package org.example.accountservice.configurations;
+package org.example.cashservice.configurations;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -26,11 +26,25 @@ public class GateWayConfig {
     @Value("${spring.security.oauth2.client.provider.keycloak.token-uri}")
     private String tokenUri;
 
+    static private String ACCOUNT_SERVICE = "accountservice";
+
+    static private String BLOCKER_SERVICE = "blockerservice";
+
     static private String NOTIFICATIONS_SERVICE = "notificationsservice";
 
     @Bean
     public String notificationsUrl() {
         return gatewayUrl + "/" + NOTIFICATIONS_SERVICE + "/notifications";
+    }
+
+    @Bean
+    public String accountApplicationUrl() {
+        return gatewayUrl + "/" + ACCOUNT_SERVICE;
+    }
+
+    @Bean
+    public String blockerApplicationUrl() {
+        return gatewayUrl + "/" + BLOCKER_SERVICE + "/blocker";
     }
 
     @Bean
@@ -40,7 +54,7 @@ public class GateWayConfig {
                 .clientSecret(clientSecret)
                 .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
                 .tokenUri(tokenUri)
-                .scope("notifications.write")
+                .scope("accounts.read","blocker.read","notifications.write")
                 .build();
         return new InMemoryClientRegistrationRepository(keycloakClient);
     }
