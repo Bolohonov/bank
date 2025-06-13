@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class AccountModel {
+public class Account {
     private String accountNumber;
     private String currencyTitle;
     private Double balance;
