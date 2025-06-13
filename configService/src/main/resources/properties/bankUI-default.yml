@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: bankUI
+  cloud:
+    config:
+      enabled: false
+  datasource:
+    initialization-mode: never
+    enabled: false
+  liquibase:
+    enabled: false
+  security:
+    oauth2:
+      client:
+        registration:
+          service-client:
+            client-id: front-ui
+            client-secret: dH2ik3GGiu8ubKuyiWu9ZV4Oz9GHg7zy
+        provider:
+          keycloak:
+            token-uri: ${KEYCLOAK_TOKEN_URL}
+
+server:
+  port: ${BANK_UI_SERVER_PORT}
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_ZONE}
+ya-bank:
+  gateway: ${GATEWAY_SERVER_URL}

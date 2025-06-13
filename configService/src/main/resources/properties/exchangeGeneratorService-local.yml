@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: exchangeGeneratorService
+  cloud:
+    config:
+      enabled: false
+  datasource:
+    initialization-mode: never
+    enabled: false
+  liquibase:
+    enabled: false
+  security:
+    oauth2:
+      client:
+        registration:
+          service-client:
+            client-id: exchange-generator-service
+            client-secret: dH2ik3GGiu8ubKuyiWu9ZV4Oz9GHg7zy
+        provider:
+          keycloak:
+            token-uri: http://localhost:8282/realms/yabank/protocol/openid-connect/token
+server:
+  port: 8091
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+ya-bank:
+  gateway: http://localhost:8084/

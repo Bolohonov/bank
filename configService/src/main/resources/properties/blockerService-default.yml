@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: blockerService
+  cloud:
+    config:
+      enabled: false
+  datasource:
+    initialization-mode: never
+    enabled: false
+  liquibase:
+    enabled: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URL}
+
+server:
+  port: ${BLOCKER_SERVER_PORT}
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_ZONE}

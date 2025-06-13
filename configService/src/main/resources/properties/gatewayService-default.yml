@@ -1,0 +1,62 @@
+spring:
+  application:
+    name: gatewayService
+  cloud:
+    config:
+      enabled: false
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: accountService
+          uri: lb://accountService
+          predicates:
+            - Path=/accountService/**
+          filters:
+            - RewritePath=/accountService/?(?<segment>.*), /$\{segment}
+        - id: notificationsService
+          uri: lb://notificationsService
+          predicates:
+            - Path=/notificationsService/**
+          filters:
+            - RewritePath=/notificationsService/?(?<segment>.*), /$\{segment}
+        - id: blockerService
+          uri: lb://blockerService
+          predicates:
+            - Path=/blockerService/**
+          filters:
+            - RewritePath=/blockerService/?(?<segment>.*), /$\{segment}
+        - id: exchangeService
+          uri: lb://exchangeService
+          predicates:
+            - Path=/exchangeService/**
+          filters:
+            - RewritePath=/exchangeService/?(?<segment>.*), /$\{segment}
+        - id: cashService
+          uri: lb://cashService
+          predicates:
+            - Path=/cashService/**
+          filters:
+            - RewritePath=/cashService/?(?<segment>.*), /$\{segment}
+        - id: transferService
+          uri: lb://transferService
+          predicates:
+            - Path=/transferService/**
+          filters:
+            - RewritePath=/transferService/?(?<segment>.*), /$\{segment}
+  datasource:
+    initialization-mode: never
+    enabled: false
+  liquibase:
+    enabled: false
+
+server:
+  port: ${GATEWAY_SERVER_PORT}
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_ZONE}

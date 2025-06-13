@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: accountService
+  datasource:
+    url: ${DATASOURCE_URL}
+    username: ${DATASOURCE_USERNAME}
+    password: ${DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+  liquibase:
+    enabled: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URL}
+      client:
+        registration:
+          service-client:
+            client-id: account-service
+            client-secret: dH2ik3GGiu8ubKuyiWu9ZV4Oz9GHg7zy
+        provider:
+          keycloak:
+            token-uri: ${KEYCLOAK_TOKEN_URL}
+server:
+  port: ${ACCOUNTS_SERVER_PORT}
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_ZONE}
+ya-bank:
+  gateway: ${GATEWAY_SERVER_URL}
+logging:
+  level:
+    liquibase: DEBUG
