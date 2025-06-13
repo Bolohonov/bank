@@ -1,13 +1,13 @@
 spring:
   application:
-    name: configServerService
+    name: configService
   profiles:
     active: native
   cloud:
     config:
       server:
         native:
-          search-locations: classpath:/config-prop/
+          search-locations: classpath:/properties/
 
 server:
   port: ${CONFIG_SERVER_PORT:8088}
