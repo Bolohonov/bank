@@ -1,11 +1,11 @@
-package org.example.bankui.response;
+package org.example.bankui.request;
 
 import lombok.Builder;
 import lombok.Data;
 
 @Data
 @Builder
-public class AccountOperationResponse {
+public class AccountOperation {
     private String currency;
     private String login;
     private Double amount;

@@ -1,10 +1,10 @@
 package org.example.bankui.controller;
 
+import org.example.bankui.request.AccountOperation;
 import org.example.bankui.request.AccountRequest;
 import org.example.bankui.request.ChangePasswordRequest;
-import org.example.bankui.response.AccountOperationResponse;
+import org.example.bankui.request.TransferOperation;
 import org.example.bankui.response.HttpResponseDto;
-import org.example.bankui.response.TransferOperationResponse;
 import org.example.bankui.response.UserResponse;
 import org.example.bankui.service.AccountService;
 import org.example.bankui.service.CashService;
@@ -156,7 +156,7 @@ public class UserController {
             @RequestParam String action,
             Model model) {
 
-        AccountOperationResponse accountOperationDto = AccountOperationResponse.builder()
+        AccountOperation accountOperationDto = AccountOperation.builder()
                 .login(login)
                 .currency(currency)
                 .amount(value)
@@ -190,8 +190,8 @@ public class UserController {
             @RequestParam(name = "to_login") String toLogin,
             @RequestParam double value,
             Model model) {
-        // Подготовка DTO для перевода
-        TransferOperationResponse transferOperationResponse = TransferOperationResponse.builder()
+
+        TransferOperation response = TransferOperation.builder()
                 .fromLogin(login)
                 .toLogin(toLogin)
                 .fromCurrency(fromCurrency)
@@ -199,16 +199,16 @@ public class UserController {
                 .amount(value)
                 .build();
 
-        HttpResponseDto httpResponseDto = transferService.transfer(transferOperationResponse);
+        HttpResponseDto httpResponseDto = transferService.transfer(response);
 
         if ("0".equals(httpResponseDto.getStatusCode())) {
-            if (transferOperationResponse.getToLogin().equals(transferOperationResponse.getFromLogin())) {
+            if (response.getToLogin().equals(response.getFromLogin())) {
                 model.addAttribute("transferIsOK", true);
             } else {
                 model.addAttribute("transferOtherIsOK", true);
             }
         } else {
-            if (transferOperationResponse.getToLogin().equals(transferOperationResponse.getFromLogin())) {
+            if (response.getToLogin().equals(response.getFromLogin())) {
                 model.addAttribute("transferErrors",
                         List.of("Ошибка операции: " + httpResponseDto.getStatusMessage()));
             } else {
