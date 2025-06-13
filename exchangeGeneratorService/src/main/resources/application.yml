@@ -1,5 +1,5 @@
 spring:
   application:
-    name: bankUI
+    name: exchangeGeneratorService
   config:
     import: configservice:${CONFIG_SERVER_URL:http://localhost:8088/}

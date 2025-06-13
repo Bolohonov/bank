@@ -1,1 +1,5 @@
-spring.application.name=eurekaServer
+spring:
+  application:
+    name: eurekaServer
+  config:
+    import: configservice:${CONFIG_SERVER_URL:http://localhost:8088/}
