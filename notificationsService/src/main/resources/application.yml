@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: notificationsService
+  config:
+    import: configservice:${CONFIG_SERVER_URL:http://localhost:8088/}
