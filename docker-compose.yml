@@ -62,7 +62,7 @@ services:
     networks:
       - postgres_network
 
-  accounts-application:
+  account-service:
     build:
       context: ./accountService
       dockerfile: Dockerfile
@@ -111,7 +111,7 @@ services:
     networks:
       - postgres_network
 
-  blocker-application:
+  blocker-service:
     build:
       context: ./blockerService
       dockerfile: Dockerfile
@@ -183,7 +183,7 @@ services:
     networks:
       - postgres_network
 
-  cash-application:
+  cash-service:
     build:
       context: ./cashService
       dockerfile: Dockerfile
@@ -206,7 +206,7 @@ services:
     networks:
       - postgres_network
 
-  transfer-application:
+  transfer-service:
     build:
       context: ./transferService
       dockerfile: Dockerfile
