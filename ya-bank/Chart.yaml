@@ -1,0 +1,23 @@
+apiVersion: v2
+name: bank
+version: 0.1.0
+appVersion: "0.1.0"
+description: Зонтичный Helm чарт для bank
+type: application
+dependencies:
+  - name: exchange-service
+    version: "0.1.0"
+    repository: "file://./charts/exchange-service"
+  - name: notifications-service
+    version: "0.1.0"
+    repository: "file://./charts/notifications-service"
+  - name: postgresql   # Одну БД на все сервисы для экономии ресурсов компьютера
+    version: "14.2.3"
+    repository: "https://charts.bitnami.com/bitnami"
+    alias: db
+    condition: db.enabled
+  - name: keycloak
+    version: "24.7.3"
+    repository: "https://charts.bitnami.com/bitnami"
+    alias: keycloak
+    condition: keycloak.enabled

@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notifications-application
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: notifications-application
+  template:
+    metadata:
+      labels:
+        app: notifications-application
+    spec:
+      containers:
+        - name: notifications-application
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          env:
+            - name: SPRING_CONFIG_LOCATION
+              value: file:///app/config/
+            - name: SPRING_DATASOURCE_USERNAME
+              value: {{ .Values.config.database_username | quote }}
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: yabank-db
+                  key: password
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/config
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ include "notifications-application.fullname" . }}
