@@ -1,6 +1,7 @@
-SET DOCKER_TLS_VERIFY=1
-SET DOCKER_HOST=tcp://127.0.0.1:56704
-SET DOCKER_CERT_PATH=C:\Users\pav\.minikube\certs
-SET MINIKUBE_ACTIVE_DOCKERD=minikube
-REM To point your shell to minikube's docker-daemon, run:
-REM @FOR /f "tokens=*" %i IN ('minikube -p minikube docker-env --shell cmd') DO @%i
+export DOCKER_TLS_VERIFY="1"
+export DOCKER_HOST="tcp://127.0.0.1:51118"
+export DOCKER_CERT_PATH="/Users/mihailbolohonov/.minikube/certs"
+export MINIKUBE_ACTIVE_DOCKERD="minikube"
+
+# To point your shell to minikube's docker-daemon, run:
+# eval $(minikube -p minikube docker-env)

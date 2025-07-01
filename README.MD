@@ -62,8 +62,8 @@
 
 4. Сборка и загрузка Docker-образов в Minikube
    ```bash
-   docker build -t exchange-generator-application:0.0.1-SNAPSHOT ./exchangeGeneratorService
-   docker build -t notifications-application:0.0.1-SNAPSHOT ./notificationsService
+   docker build -t exchange-generator-service:0.0.1-SNAPSHOT ./exchangeGeneratorService
+   docker build -t notifications-service:0.0.1-SNAPSHOT ./notificationsService
    ```
 
 3) Проверка ingress
