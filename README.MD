@@ -42,10 +42,6 @@
 
 1. Клонирование репозитория
 
-```bash
-git clone https://github.com/pinfixalesha/yaBank.git 
-```
-
 2. Соберите приложение с помощью Gradle:
    ```bash
    gradle build
