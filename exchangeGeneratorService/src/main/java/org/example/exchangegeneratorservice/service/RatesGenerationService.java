@@ -1,8 +1,13 @@
 package org.example.exchangegeneratorservice.service;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import lombok.RequiredArgsConstructor;
 import org.example.exchangegeneratorservice.dto.CurrencyRateDto;
 import org.example.exchangegeneratorservice.dto.HttpResponseDto;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -13,17 +18,38 @@ import java.util.List;
 import java.util.Random;
 
 @Service
+@RequiredArgsConstructor
 public class RatesGenerationService {
 
+    private static final Logger log = LoggerFactory.getLogger(RatesGenerationService.class);
+
     @Autowired
-    private ExchangeService exchangeService;
+    private final ExchangeService exchangeService;
+
+    @Autowired
+    private final ExchangeProducer exchangeProducer;
+
+    @Autowired
+    private final MeterRegistry meterRegistry;
+
+    @Value("${metricsEnabled:true}")
+    private boolean metricsEnabled;
 
     private static final Random random = new Random();
 
     @Scheduled(fixedRate = 10000)
     public void generateRates() {
         List<CurrencyRateDto> currencyRateDtos = generateRandomRates();
-        HttpResponseDto response = exchangeService.sendRates(currencyRateDtos);
+        log.info("Отправка курсов валют "+currencyRateDtos);
+        HttpResponseDto response = exchangeProducer.sendRates(currencyRateDtos);
+        //HttpResponseDto response = exchangeApplicationService.sendRates(currencyRateDtos);
+        if (response!=null) {
+            log.info("Результат отправки " + response.getStatusCode() + " " + response.getStatusMessage());
+            if (metricsEnabled) meterRegistry.counter("currency_rates_send_ok").increment();
+        } else {
+            log.info("Результат отправки null");
+            if (metricsEnabled) meterRegistry.counter("currency_rates_send_error").increment();
+        }
     }
 
     private List<CurrencyRateDto> generateRandomRates() {
