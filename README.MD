@@ -19,6 +19,8 @@
 - **База данных:** PostgreSQL
 - **Контейнеризация:** Docker
 - **Оркестрация контейнеров:** Kubernetes
+- - **CI/CD:** Jenkins
+- **Apache Kafka**: Взаимодействие с микросервисом Notifications, Exchange с использованием платформы Apache Kafka
 
 ## Структура микросервисов
 
@@ -46,81 +48,94 @@
    ```bash
    gradle build
    ```
-4. Запуск Minikube (если ещё не запущен)
+3. Запуск Minikube (если ещё не запущен)
    ```bash
    minikube start
    minikube status
    ```
-5. Активируем Docker-окружение Minikube
+4. Для Minikube включите Ingress-добавку и увеличте память
+   ```bash
+   minikube addons enable ingress
+   minikube config view vm-driver
+   minikube config get memory
+   minikube config set memory 16384
+   minikube stop
+   minikube start
+   ```
+5. Minikube / локальный кластер не имеет правильной настройки DNS, поэтому ip указываем в /etc/hosts
+   ```bash
+   minikube ip
+   ```
+Формат
+<minikube-ip> gateway-ingress.bank.local
+- Пример
+>192.168.49.2 gateway-ingress.bank.local
+
+6. Для локального запуска следует добавить DNS имя для Kafka
+127.0.0.1 bolohonov.kafka.ru
+
+
+7. Активируем Docker-окружение Minikube
    ```bash
    minikube docker-env >addenv.bat
    addenv.bat
    ```
-3. Если отсутствует доступ, то необходимо подгрузить
+8. Если нет доступа к bitnamicharts, то тянем к себе вручную
+   ```bash
    helm pull oci://registry-1.docker.io/bitnamicharts/keycloak --version 24.7.3
    helm pull oci://registry-1.docker.io/bitnamicharts/postgresql --version 14.2.3
-
-4. Сборка и загрузка Docker-образов в Minikube
+   helm pull oci://registry-1.docker.io/bitnamicharts/kafka --version 32.2.13
+   ```
+9. Сборка и загрузка Docker-образов в Minikube
    ```bash
+   docker images
+   minikube image ls   
    docker build -t exchange-generator-service:0.0.1-SNAPSHOT ./exchangeGeneratorService
    docker build -t notifications-service:0.0.1-SNAPSHOT ./notificationsService
+   docker build -t blocker-service:0.0.1-SNAPSHOT ./blockerService
+   docker build -t exchange-service:0.0.1-SNAPSHOT ./exchangeService
+   docker build -t account-service:0.0.1-SNAPSHOT ./accountService
+   docker build -t cash-service:0.0.1-SNAPSHOT ./cashService   
+   docker build -t transfer-service:0.0.1-SNAPSHOT ./transferService
+   docker build -t bank-ui:0.0.1-SNAPSHOT ./bankUI   
    ```
 
-3) Проверка ingress
+10. Проверка ingress
    ```bash
    kubectl get pods -n kube-system
-   ```
-4) Ingress
-   ```bash
    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml
-   ```
-5) Проверка ingress
-   ```bash
    kubectl get svc -n ingress-nginx
    ```
-6) Обновление helm чартов
+
+11. Добавление внешних репозитории
+   ```bash
+   helm repo add elastic https://helm.elastic.co
+   helm repo add stable https://charts.helm.sh/stable
+   helm repo update
+   ```
+12. Обновление helm чартов
    ```bash
    cd bank
    helm dependency update .
-    ```
-Запуск
-helm install bank ./
-
-
-Шаг 5. Проверьте, что сервис запущен и доступен внутри кластера
-kubectl get svc
-
-
-kubectl get pods
-
-Кол-во реплик
-kubectl get replicaset -l app=exchange-generator-service
-
-kubectl exec -it bank-db-0 -- bash
-Вывод ключа пароля к БД
-kubectl get secret bank-db -o jsonpath='{.data}'
->'{"postgres-password":"VTdhSXVVN3EyZw=="}'
->echo "VTdhSXVVN3EyZw==" | base64 --decode
-U7aIuU7q2g
-
-СУБД настройки не применяются без пересоздания PVC
-uninstall проекта найдите и удалите PVC:
-kubectl get pvc
-Затем удалите и затем install заново
-kubectl delete pvc data-bank-db-0
-
-kubectl port-forward bank-db-0 5432:5432
-
-kubectl port-forward bank-keycloak-0 8080:8080
-
-
-6. Запуск сервисов Docker Compose:
-   ```bash
-   docker-compose up --build -d
+   helm dependency build
    ```
-Приложение будет доступно по адресу: http://localhost:8080
+13. Запуск
+   ```bash
+   helm install bank ./
+   ```
+14. Доступ к приложению с использованием команды minikube для отображения url приложения
+    ```bash 
+    minikube service bank-ui --url
+    
+    >http://127.0.0.1:51899
+    >! Because you are using a Docker driver on windows, the terminal needs to be open to run it.
+    ```
 
-
+15. После запуска выполним тест helm
+    ```bash 
+    helm test bank
+    ```
+    
 ## Тестирование
 
 Приложение покрыто юнит- и интеграционными тестами с использованием JUnit 5, TestContext Framework и Spring Boot Test. Для запуска тестов выполните:
@@ -139,3 +154,58 @@ kubectl port-forward bank-keycloak-0 8080:8080
     - KEYCLOAK_ADMIN: admin
     - KEYCLOAK_ADMIN_PASSWORD: adminpassword
     - Настройка клиента KeyCloak: realm-config.json
+
+## CI/CD Jenkins
+
+### Создайте `.env`:
+
+```env
+# Путь до локального kubeconfig-файла
+KUBECONFIG_PATH=C:\Users\bolohonov\.kube\config.yaml
+
+# Параметры для GHCR
+GITHUB_USERNAME=bolohonov
+GITHUB_TOKEN=ghp_{токен}
+GHCR_TOKEN=ghp_{токен}
+
+# Docker registry (в данном случае GHCR)
+DOCKER_REGISTRY=ghcr.io/your-username
+GITHUB_REPOSITORY=bolohonov/bank
+
+# Пароль к базе данных PostgreSQL
+DB_PASSWORD=postgres
+```
+> Убедитесь, что GitHub Token имеет права `write:packages`, `read:packages` и `repo`.
+
+### Запустите Jenkins
+
+```bash
+cd jenkins
+docker compose up -d --build
+```
+
+Jenkins будет доступен по адресу: [http://localhost:8080](http://localhost:8080)
+
+
+## Завершение работы и очистка
+
+Для остановки Jenkins, удаления namespace, а также всех установленных ресурсов, используйте скрипт `nuke-all.sh`.
+Он находится в папке `jenkins`:
+```bash
+cd jenkins
+./nuke-all.sh
+```
+
+## Локальный запуск без контейнеризации
+
+Добавляем в hosts
+```bash
+127.0.0.1 account-service
+127.0.0.1 bank-ui
+127.0.0.1 blocker-service
+127.0.0.1 cash-service
+127.0.0.1 exchange-generator-service
+127.0.0.1 exchange-service
+127.0.0.1 notifications-service
+127.0.0.1 transfer-service
+```
