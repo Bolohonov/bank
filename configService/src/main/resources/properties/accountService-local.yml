@@ -2,7 +2,7 @@ spring:
   application:
     name: accountService
   datasource:
-    url: jdbc:postgresql://localhost:5433/yaBank
+    url: jdbc:postgresql://localhost:5433/bank
     username: yaBank
     password: 12345
     driver-class-name: org.postgresql.Driver
@@ -16,7 +16,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8282/realms/yabank
+          issuer-uri: http://localhost:8282/realms/bank
       client:
         registration:
           service-client:
@@ -25,6 +25,20 @@ spring:
         provider:
           keycloak:
             token-uri: http://localhost:8282/realms/yabank/protocol/openid-connect/token
+  kafka:
+    bootstrap-servers: bolohonov.kafka.ru:9092
+    producer:
+      bootstrap-servers: bolohonov.kafka.ru:9092
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        acks: all
+    admin:
+      client-id: bank-app
+    properties:
+      security.protocol: PLAINTEXT
+    template:
+      observation-enabled: true
 server:
   port: 8083
 eureka:
@@ -33,7 +47,7 @@ eureka:
   client:
     serviceUrl:
       defaultZone: http://localhost:8761/eureka/
-ya-bank:
+bank:
   gateway: http://localhost:8084/
 logging:
   level:

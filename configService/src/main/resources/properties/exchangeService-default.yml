@@ -20,6 +20,24 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URL}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    consumer:
+      group-id: currency-rate-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        acks: all
+    listener:
+      observation-enabled: true
+      ack-mode: RECORD
+    admin:
+      client-id: bank-app
+    properties:
+      security.protocol: PLAINTEXT
+    template:
+      observation-enabled: true
 server:
   port: ${EXCHANGE_SERVER_PORT}
 eureka:
@@ -28,7 +46,7 @@ eureka:
   client:
     serviceUrl:
       defaultZone: ${EUREKA_ZONE}
-ya-bank:
+bank:
   gateway: ${GATEWAY_SERVER_URL}
 logging:
   level:

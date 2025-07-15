@@ -13,7 +13,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8282/realms/yabank
+          issuer-uri: http://localhost:8282/realms/bank
 server:
   port: 8085
 eureka:

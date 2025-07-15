@@ -18,7 +18,7 @@ spring:
             client-secret: dH2ik3GGiu8ubKuyiWu9ZV4Oz9GHg7zy
         provider:
           keycloak:
-            token-uri: http://localhost:8282/realms/yabank/protocol/openid-connect/token
+            token-uri: http://localhost:8282/realms/bank/protocol/openid-connect/token
 server:
   port: 8080
 eureka:
@@ -27,5 +27,5 @@ eureka:
   client:
     serviceUrl:
       defaultZone: http://localhost:8761/eureka/
-ya-bank:
+bank:
   gateway: http://localhost:8084/

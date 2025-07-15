@@ -22,6 +22,20 @@ spring:
         provider:
           keycloak:
             token-uri: ${KEYCLOAK_TOKEN_URL}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    producer:
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        acks: all
+    admin:
+      client-id: bank-app
+    properties:
+      security.protocol: PLAINTEXT
+    template:
+      observation-enabled: true
 server:
   port: ${CASH_SERVER_PORT}
 eureka:
@@ -30,5 +44,5 @@ eureka:
   client:
     serviceUrl:
       defaultZone: ${EUREKA_ZONE}
-ya-bank:
+bank:
   gateway: ${GATEWAY_SERVER_URL}

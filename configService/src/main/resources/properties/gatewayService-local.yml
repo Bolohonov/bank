@@ -10,42 +10,42 @@ spring:
           enabled: true
           lower-case-service-id: true
       routes:
-        - id: accountsApplication
-          uri: lb://accountsApplication
+        - id: accountService
+          uri: lb://accountService
           predicates:
-            - Path=/accountsApplication/**
+            - Path=/accountService/**
           filters:
-            - RewritePath=/accountsApplication/?(?<segment>.*), /$\{segment}
-        - id: notificationsApplication
-          uri: lb://notificationsApplication
+            - RewritePath=/accountService/?(?<segment>.*), /$\{segment}
+        - id: notificationsService
+          uri: lb://notificationsService
           predicates:
-            - Path=/notificationsApplication/**
+            - Path=/notificationsService/**
           filters:
-            - RewritePath=/notificationsApplication/?(?<segment>.*), /$\{segment}
-        - id: blockerApplication
-          uri: lb://blockerApplication
+            - RewritePath=/notificationsService/?(?<segment>.*), /$\{segment}
+        - id: blockerService
+          uri: lb://blockerService
           predicates:
-            - Path=/blockerApplication/**
+            - Path=/blockerService/**
           filters:
-            - RewritePath=/blockerApplication/?(?<segment>.*), /$\{segment}
-        - id: exchangeApplication
-          uri: lb://exchangeApplication
+            - RewritePath=/blockerService/?(?<segment>.*), /$\{segment}
+        - id: exchangeService
+          uri: lb://exchangeService
           predicates:
-            - Path=/exchangeApplication/**
+            - Path=/exchangeService/**
           filters:
-            - RewritePath=/exchangeApplication/?(?<segment>.*), /$\{segment}
-        - id: cashApplication
-          uri: lb://cashApplication
+            - RewritePath=/exchangeService/?(?<segment>.*), /$\{segment}
+        - id: cashService
+          uri: lb://cashService
           predicates:
-            - Path=/cashApplication/**
+            - Path=/cashService/**
           filters:
-            - RewritePath=/cashApplication/?(?<segment>.*), /$\{segment}
-        - id: transferApplication
-          uri: lb://transferApplication
+            - RewritePath=/cashService/?(?<segment>.*), /$\{segment}
+        - id: transferService
+          uri: lb://transferService
           predicates:
-            - Path=/transferApplication/**
+            - Path=/transferService/**
           filters:
-            - RewritePath=/transferApplication/?(?<segment>.*), /$\{segment}
+            - RewritePath=/transferService/?(?<segment>.*), /$\{segment}
   datasource:
     initialization-mode: never
     enabled: false

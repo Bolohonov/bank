@@ -1,9 +1,9 @@
 spring:
   application:
-    name: exchangeService
+    name: notificationsService
   datasource:
     url: jdbc:postgresql://localhost:5433/bank
-    username: postgres
+    username: bank
     password: postgres
     driver-class-name: org.postgresql.Driver
   jpa:
@@ -20,12 +20,12 @@ spring:
   kafka:
     bootstrap-servers: bolohonov.kafka.ru:9092
     consumer:
-      group-id: currency-rate-group
+      group-id: notify-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        acks: all
+        spring.json.trusted.packages: org.example.accountservice.notifications
     listener:
       observation-enabled: true
       ack-mode: RECORD
@@ -36,15 +36,15 @@ spring:
     template:
       observation-enabled: true
 server:
-  port: 8087
+  port: 8081
 eureka:
   instance:
     prefer-ip-address: true
   client:
     serviceUrl:
       defaultZone: http://localhost:8761/eureka/
-bank:
-  gateway: http://localhost:8084/
+
 logging:
   level:
     liquibase: DEBUG
+
