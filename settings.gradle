@@ -1,1 +1,3 @@
-rootProject.name = 'bank'
+include 'blockerService', 'cashService', 'configService', 'eurekaServer',
+        'exchangeService', 'exchangeGeneratorService', 'gatewayService',
+        'notificationsService', 'transferService', 'bankUI', 'accountService'

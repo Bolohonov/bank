@@ -11,6 +11,7 @@ import org.example.accountservice.response.AccountOperation;
 import org.example.accountservice.response.AccountResponse;
 import org.example.accountservice.response.HttpResponseDto;
 import org.example.accountservice.service.AccountsService;
+import org.example.accountservice.service.NotificationProducer;
 import org.example.accountservice.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,7 +46,7 @@ public class AccountsServiceTest {
     private AccountsRepository accountsRepository;
 
     @MockitoBean(reset = MockReset.BEFORE)
-    private NotificationService notificationService;
+    private NotificationProducer notificationProducer;
 
     private User user;
 
@@ -74,7 +75,7 @@ public class AccountsServiceTest {
                 .statusMessage("OK")
                 .build();
 
-        when(notificationService.sendNotification(anyString(),anyString())).thenReturn(mockResponse);
+        when(notificationProducer.sendNotification(anyString(),anyString())).thenReturn(mockResponse);
         Long accountId = accountsService.addAccount(request);
 
         assertNotNull(accountId);
@@ -83,7 +84,7 @@ public class AccountsServiceTest {
         assertEquals("USD", accounts.get(0).getCurrency());
         assertEquals(0, accounts.get(0).getBalance().doubleValue());
 
-        verify(notificationService, times(1)).sendNotification(anyString(),anyString());
+        verify(notificationProducer, times(1)).sendNotification(anyString(),anyString());
     }
 
     @Test

@@ -8,6 +8,7 @@ import org.example.accountservice.repository.UsersRepository;
 import org.example.accountservice.request.UserRequest;
 import org.example.accountservice.response.HttpResponseDto;
 import org.example.accountservice.response.UserResponse;
+import org.example.accountservice.service.NotificationProducer;
 import org.example.accountservice.service.NotificationService;
 import org.example.accountservice.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,7 +44,7 @@ public class UserServiceTest {
     private AccountsRepository accountsRepository;
 
     @MockitoBean(reset = MockReset.BEFORE)
-    private NotificationService notificationService;
+    private NotificationProducer notificationProducer;
 
     private User user;
 
@@ -74,14 +75,14 @@ public class UserServiceTest {
                 .statusMessage("OK")
                 .build();
 
-        when(notificationService.sendNotification(anyString(),anyString())).thenReturn(mockResponse);
+        when(notificationProducer.sendNotification(anyString(),anyString())).thenReturn(mockResponse);
         Long userId = userService.createUser(request);
 
         assertNotNull(userId);
         List<User> users = usersRepository.findAll();
         assertEquals(2, users.size());
         assertEquals("user2", users.get(1).getLogin());
-        verify(notificationService, times(1)).sendNotification(anyString(),anyString());
+        verify(notificationProducer, times(1)).sendNotification(anyString(),anyString());
     }
 
     @Test
@@ -104,7 +105,7 @@ public class UserServiceTest {
                 .statusMessage("OK")
                 .build();
 
-        when(notificationService.sendNotification(anyString(),anyString())).thenReturn(mockResponse);
+        when(notificationProducer.sendNotification(anyString(),anyString())).thenReturn(mockResponse);
         Long userId = userService.editUser(request);
 
 
@@ -113,6 +114,6 @@ public class UserServiceTest {
         assertNotNull(updatedUser);
         assertEquals("Иван Иванов (обновленный)", updatedUser.getFio());
         assertEquals(LocalDate.of(1995, 1, 1), updatedUser.getDateOfBirth());
-        verify(notificationService, times(1)).sendNotification(anyString(),anyString());
+        verify(notificationProducer, times(1)).sendNotification(anyString(),anyString());
     }
 }
