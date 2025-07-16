@@ -29,6 +29,24 @@ data:
             provider:
               keycloak:
                 token-uri: {{ tpl .Values.keycloak.token_uri . | quote }}
+      kafka:
+        bootstrap-servers: {{ tpl .Values.kafka.url . | quote }}
+        consumer:
+          group-id: currency-rate-group
+          auto-offset-reset: earliest
+          key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+          value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+          properties:
+            acks: all
+        listener:
+          observation-enabled: true
+          ack-mode: RECORD
+        admin:
+          client-id: bank-app
+        properties:
+          security.protocol: PLAINTEXT
+        template:
+          observation-enabled: true
     server:
       port: {{ .Values.service.port }}
     bank:
