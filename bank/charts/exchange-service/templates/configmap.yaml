@@ -3,12 +3,12 @@ kind: ConfigMap
 metadata:
   name: {{ include "exchange-service.fullname" . }}
   labels:
-    {{- include "exchange-generator-application.labels" . | nindent 4 }}
+    {{- include "exchange-generator-service.labels" . | nindent 4 }}
 data:
   application.yml: |  
     spring:
       application:
-        name: exchangeGeneratorApplication
+        name: exchangeGeneratorService
       cloud:
         discovery:
           enabled: false
@@ -31,7 +31,7 @@ data:
                 token-uri: {{ tpl .Values.keycloak.token_uri . | quote }}
     server:
       port: {{ .Values.service.port }}
-    ya-bank:
+    bank:
       gateway: {{ tpl .Values.gateway.service_url . | quote }}
     eureka:
       client:
