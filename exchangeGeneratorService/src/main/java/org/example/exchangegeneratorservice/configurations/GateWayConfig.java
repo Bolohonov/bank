@@ -1,5 +1,8 @@
 package org.example.exchangegeneratorservice.configurations;
 
+import lombok.RequiredArgsConstructor;
+import io.micrometer.tracing.Span;
+import io.micrometer.tracing.Tracer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,7 +15,10 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.web.client.RestClient;
 
 @Configuration
+@RequiredArgsConstructor
 public class GateWayConfig {
+
+    private final Tracer tracer;
 
     @Value("${bank.gateway}")
     private String gatewayUrl;
@@ -26,16 +32,16 @@ public class GateWayConfig {
     @Value("${spring.security.oauth2.client.provider.keycloak.token-uri}")
     private String tokenUri;
 
-    static private String EXCHANGE_SERVICE = "exchangeservice";
+    static private String EXCHANGE_APPLICATION = "exchangeApplication";
 
     @Bean
     public String exchangeApplicationUrl() {
-        return gatewayUrl + "/" + EXCHANGE_SERVICE +"/exchange/rates";
+        return gatewayUrl + "/" + EXCHANGE_APPLICATION +"/exchange/rates";
     }
 
     @Bean
     public ClientRegistrationRepository clientRegistrationRepository() {
-        ClientRegistration keycloakClient = ClientRegistration.withRegistrationId("oauth-bank")
+        ClientRegistration keycloakClient = ClientRegistration.withRegistrationId("oauth-yabank")
                 .clientId(clientId)
                 .clientSecret(clientSecret)
                 .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
@@ -66,13 +72,28 @@ public class GateWayConfig {
         return manager;
     }
 
+    public final String buildTraceParent(String traceId,String spanId) {
+        return String.format("00-%s-%s-01", traceId, spanId);
+    }
+
     @Bean
     public RestClient restClient(OAuth2AuthorizedClientManager authorizedClientManager) {
         OAuth2ClientHttpRequestInterceptor requestInterceptor =
                 new OAuth2ClientHttpRequestInterceptor(authorizedClientManager);
-        requestInterceptor.setClientRegistrationIdResolver(request -> "oauth-bank");
+        requestInterceptor.setClientRegistrationIdResolver(request -> "oauth-yabank");
         return RestClient.builder()
-                .requestInterceptor(requestInterceptor)
+                .requestInterceptor((request, body, execution) -> {
+                    Span currentSpan = tracer.currentSpan();
+                    if (currentSpan != null) {
+                        String traceParent = buildTraceParent(
+                                currentSpan.context().traceId(),
+                                currentSpan.context().spanId()
+                        );
+                        request.getHeaders().set("traceparent", traceParent);
+                    }
+
+                    return requestInterceptor.intercept(request, body, execution);
+                })
                 .build();
     }
 }
