@@ -3,12 +3,12 @@ kind: ConfigMap
 metadata:
   name: {{ include "exchange-service.fullname" . }}
   labels:
-    {{- include "exchange-generator-service.labels" . | nindent 4 }}
+    {{- include "exchange-service.labels" . | nindent 4 }}
 data:
   application.yml: |  
     spring:
       application:
-        name: exchangeGeneratorService
+        name: exchangeService
       cloud:
         discovery:
           enabled: false
@@ -24,7 +24,7 @@ data:
           client:
             registration:
               service-client:
-                client-id: exchange-generator-service
+                client-id: exchange-service
                 client-secret: dH2ik3GGiu8ubKuyiWu9ZV4Oz9GHg7zy
             provider:
               keycloak:
