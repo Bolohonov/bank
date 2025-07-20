@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: notifications-application
+  name: notifications-service
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: notifications-application
+      app: notifications-service
   template:
     metadata:
       labels:
-        app: notifications-application
+        app: notifications-service
     spec:
       containers:
-        - name: notifications-application
+        - name: notifications-service
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           ports:
             - containerPort: {{ .Values.service.port }}
@@ -33,4 +33,4 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: {{ include "notifications-application.fullname" . }}
+            name: {{ include "notifications-service.fullname" . }}

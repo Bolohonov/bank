@@ -1,0 +1,4 @@
+apiVersion: v2
+name: account-service
+version: 0.1.0
+description: Helm чарт для account-service

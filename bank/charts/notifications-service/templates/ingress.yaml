@@ -12,7 +12,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: notifications-application
+                name: notifications-service
                 port:
                   number: 8081
           - path: /accounts

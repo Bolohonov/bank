@@ -2,12 +2,12 @@ apiVersion: v2
 name: bank
 version: 0.1.0
 appVersion: "0.1.0"
-description: Зонтичный Helm чарт для bank
+description: Зонтичный Helm чарт для Bank
 type: application
 dependencies:
-  - name: exchange-service
+  - name: exchange-generator-service
     version: "0.1.0"
-    repository: "file://./charts/exchange-service"
+    repository: "file://./charts/exchange-generator-service"
   - name: notifications-service
     version: "0.1.0"
     repository: "file://./charts/notifications-service"

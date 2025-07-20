@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "notifications-application.name" -}}
+{{- define "notifications-service.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -9,7 +9,7 @@ Expand the name of the chart.
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this.
 */}}
-{{- define "notifications-application.fullname" -}}
+{{- define "notifications-service.fullname" -}}
 {{- $name := default .Chart.Name .Values.nameOverride }}
 {{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
 {{- end }}
@@ -17,7 +17,7 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this.
 {{/*
 Common labels
 */}}
-{{- define "notifications-application.labels" -}}
+{{- define "notifications-service.labels" -}}
 app.kubernetes.io/name: {{ default .Chart.Name .Values.nameOverride }}
 helm.sh/chart: {{ printf "%s-%s" .Chart.Name .Chart.Version }}
 app.kubernetes.io/instance: {{ .Release.Name }}
