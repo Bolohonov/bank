@@ -1,26 +1,35 @@
 package org.example.bankui.service;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import lombok.RequiredArgsConstructor;
 import org.example.bankui.response.UserResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
-public class SecurityUserDetailsService implements UserDetailsService {
+@RequiredArgsConstructor
+public class SecurityUserDetailsService  implements UserDetailsService {
 
-    @Autowired
-    private AccountService accountService;
-
+    private static final Logger log = LoggerFactory.getLogger(SecurityUserDetailsService.class);
+    private final AccountService accountService;
+    private final MeterRegistry meterRegistry;
+    @Value("${metricsEnabled:true}")
+    private boolean metricsEnabled;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        UserResponse response = accountService.getUserInfo(username);
-        if (!response.getStatusCode().equals("0")) {
-            throw new UsernameNotFoundException(response.getStatusMessage());
+        UserResponse userDto = accountService.getUserInfo(username);
+        if (!userDto.getStatusCode().equals("0")) {
+            log.error("Авторизация пользователя не выполнена "+username);
+            if (metricsEnabled) meterRegistry.counter("user_login", "login", username, "status", "failure").increment();
+            throw new UsernameNotFoundException(userDto.getStatusMessage());
         }
-        return response;
+        if (metricsEnabled) meterRegistry.counter("user_login", "login", username, "status", "success").increment();
+        return userDto;
     }
-
 }
