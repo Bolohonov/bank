@@ -3,7 +3,7 @@ spring:
     name: accountService
   datasource:
     url: jdbc:postgresql://localhost:5433/bank
-    username: yaBank
+    username: bank
     password: 12345
     driver-class-name: org.postgresql.Driver
   jpa:

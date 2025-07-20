@@ -5,6 +5,7 @@ import org.example.exchangeservice.response.CurrencyRateResponse;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
 
 @Component
 public class RatesMapper {
@@ -33,4 +34,15 @@ public class RatesMapper {
                 .build();
     }
 
+    public CurrencyRateResponse toDto(LinkedHashMap rate) {
+        if (rate == null) {
+            return null;
+        }
+
+        return CurrencyRateResponse.builder()
+                .currency((String) rate.get("currency"))
+                .buy(((Double) rate.get("buy")).doubleValue())
+                .sale(((Double) rate.get("sale")).doubleValue())
+                .build();
+    }
 }
