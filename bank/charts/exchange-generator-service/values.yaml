@@ -1,5 +1,5 @@
 image:
-  repository: notifications-service
+  repository: exchange-generator-service
   pullPolicy: IfNotPresent
   tag: "0.0.1-SNAPSHOT"
 

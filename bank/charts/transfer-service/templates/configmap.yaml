@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "transfer-service.fullname" . }}
+  labels:
+    {{- include "transfer-service.labels" . | nindent 4 }}
+data:
+  application.yml: |
+    spring:
+      application:
+        name: transferService
+      cloud:
+        discovery:
+          enabled: false        
+        config:
+          enabled: false      
+      datasource:
+        initialization-mode: never
+        enabled: false
+      liquibase:
+        enabled: false
+      security:
+        oauth2:
+          client:
+            registration:
+              service-client:
+                client-id: transfer-service
+                client-secret: dH2ik3GGiu8ubKuyiWu9ZV4Oz9GHg7zy
+            provider:
+              keycloak:
+                token-uri: {{ tpl .Values.keycloak.token_uri . | quote }}
+          resourceserver:
+            jwt:
+              issuer-uri: {{ tpl .Values.keycloak.issuer_uri . | quote }}
+      kafka:
+        bootstrap-servers: {{ tpl .Values.kafka.url . | quote }}
+        producer:
+          bootstrap-servers: {{ tpl .Values.kafka.url . | quote }}
+          key-serializer: org.apache.kafka.common.serialization.StringSerializer
+          value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+          properties:
+            acks: all
+        admin:
+          client-id: yandex-practicum
+        properties:
+          security.protocol: PLAINTEXT
+        template:
+          observation-enabled: true
+    server:
+      port: {{ .Values.service.port }}
+    ya-bank:
+      gateway: {{ tpl .Values.gateway.service_url . | quote }}
+    eureka:
+      client:
+        enabled: false    
+    logging:
+      level:
+        liquibase: DEBUG   
+    management:
+      zipkin:
+        tracing:
+          endpoint: {{ tpl .Values.zipkin.url . | quote }}
+      tracing:
+        sampling:
+          probability: 1
+      endpoints:
+        web:
+          exposure:
+            include: "*"
+      metrics:
+        export:
+          prometheus:
+            enabled: true        
