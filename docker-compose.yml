@@ -435,7 +435,7 @@ services:
       - ./elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
       - ./elasticsearch/templates:/usr/share/elasticsearch/config/elasticsearch/templates
     healthcheck:
-      test: [ "CMD-SHELL", "curl -sf http://localhost:9200 | grep -q 'yabank-cluster'" ]
+      test: [ "CMD-SHELL", "curl -sf http://localhost:9200 | grep -q 'bank-cluster'" ]
       interval: 10s
       timeout: 5s
       retries: 10
