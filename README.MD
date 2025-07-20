@@ -17,9 +17,14 @@
 - **Язык программирования:** Java 21
 - **Фреймворк:** Spring Boot
 - **База данных:** PostgreSQL
-- **Контейнеризация:** Docker
-- **Оркестрация контейнеров:** Kubernetes
-- - **CI/CD:** Jenkins
+- **Миграции базы данных:** Liquibase
+- **Контейнеризация:** Helm + Kubernetes
+- **Оркестрация контейнеров:** Docker Compose
+- **Архитектура:** Микросервисная
+- **Авторизация:** OAuth 2.0 (JWT)
+- **Service Discovery и Gateway API:** Kubernetes Ingress
+- **Externalized/Distributed Config:** Kubernetes ConfigMaps
+- **CI/CD:** Jenkins
 - **Apache Kafka**: Взаимодействие с микросервисом Notifications, Exchange с использованием платформы Apache Kafka
 
 ## Структура микросервисов
