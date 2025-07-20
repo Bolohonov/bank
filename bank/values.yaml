@@ -2,36 +2,116 @@
 global:
   domain: bank.local # Example domain for ingress
 
-# Configuration for the customer-service subchart
-# NOTE: For local development (Minikube/Kind/Docker Desktop), build the image locally
-# (e.g., `docker build -t customer-service:0.0.1-SNAPSHOT .` in customer-service dir)
-# and ensure your K8s cluster can access local images (e.g., `minikube docker-env` or `kind load docker-image ...`).
 exchange-service:
   replicaCount: 1
   image:
-    # --- REVERTED TO LOCAL REPO ---
-    repository: exchange-service # Removed registry prefix
+    repository: exchange-service
     tag: "0.0.1-SNAPSHOT"
-    pullPolicy: IfNotPresent # Use IfNotPresent for local images
+    pullPolicy: IfNotPresent
     # -----------------------------
   service:
     type: ClusterIP
-    port: 8091
+    port: 8087
+  kafka:
+    url: "http://{{.Release.Name}}-kafka-broker-0.{{.Release.Name}}-kafka-broker-headless.{{.Release.Namespace}}.svc.cluster.local:9092"
+    #url: "http://bank-kafka.{{ .Release.Namespace }}.svc.cluster.local:9092"
   keycloak:
     issuer_uri: "http://bank-keycloak.{{ .Release.Namespace }}.svc.cluster.local:8080/realms/bank"
     token_uri: "http://bank-keycloak.{{ .Release.Namespace }}.svc.cluster.local:8080/realms/bank/protocol/openid-connect/token"
   ingress:
     enabled: true
     className: "nginx"
-    annotations: {}
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /$2
+      nginx.ingress.kubernetes.io/use-regex: "true"
     hosts:
-      - host: exchange-service.bank.local
+      - host: gateway-ingress.bank.local
         paths:
-          - path: /
+          - path: /exchangeService(/|$)(.*)
             pathType: ImplementationSpecific
     tls: [ ]
+  config:
+    database_url: "jdbc:postgresql://bank-db.{{ .Release.Namespace }}.svc.cluster.local:5432/bank"
+    database_username: "bank"
+  zipkin:
+    url: "http://bank-zipkin.{{ .Release.Namespace }}.svc.cluster.local:9411/api/v2/spans"
+  resources:
+    limits:
+      memory: "1Gi"
+    requests:
+      memory: "512Mi"
+
+blocker-service:
+  replicaCount: 1
+  image:
+    repository: blocker-service
+    tag: "0.0.1-SNAPSHOT"
+    pullPolicy: IfNotPresent
+    # -----------------------------
+  service:
+    type: ClusterIP
+    port: 8085
+  keycloak:
+    issuer_uri: "http://bank-keycloak.{{ .Release.Namespace }}.svc.cluster.local:8080/realms/bank"
+    token_uri: "http://bank-keycloak.{{ .Release.Namespace }}.svc.cluster.local:8080/realms/bank/protocol/openid-connect/token"
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /$2
+      nginx.ingress.kubernetes.io/use-regex: "true"
+    hosts:
+      - host: gateway-ingress.bank.local
+        paths:
+          - path: /blockerService(/|$)(.*)
+            pathType: ImplementationSpecific
+    tls: [ ]
+  config:
+    database_url: "jdbc:postgresql://bank-db.{{ .Release.Namespace }}.svc.cluster.local:5432/bank"
+    database_username: "bank"
+  zipkin:
+    url: "http://bank-zipkin.{{ .Release.Namespace }}.svc.cluster.local:9411/api/v2/spans"
+  resources:
+    limits:
+      memory: "1Gi"
+    requests:
+      memory: "512Mi"
+
+exchange-generator-service:
+  replicaCount: 1
+  image:
+    repository: exchange-generator-service
+    tag: "0.0.1-SNAPSHOT"
+    pullPolicy: IfNotPresent
+    # -----------------------------
+  service:
+    type: ClusterIP
+    port: 8091
+  kafka:
+    url: "http://{{.Release.Name}}-kafka-broker-0.{{.Release.Name}}-kafka-broker-headless.{{.Release.Namespace}}.svc.cluster.local:9092"
+    #url: "http://bank-kafka.{{ .Release.Namespace }}.svc.cluster.local:9092"
+  keycloak:
+    issuer_uri: "http://bank-keycloak.{{ .Release.Namespace }}.svc.cluster.local:8080/realms/bank"
+    token_uri: "http://bank-keycloak.{{ .Release.Namespace }}.svc.cluster.local:8080/realms/bank/protocol/openid-connect/token"
+  ingress:
+    enabled: false
+    className: "nginx"
+    annotations: {}
+    hosts:
+      - host: gateway-ingress.bank.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: [ ]
   gateway:
-    service_url: "http://exchange-service.{{ .Release.Namespace }}.svc.cluster.local:8087"
+    service_url: "http://gateway-ingress.bank.local"
+  zipkin:
+    url: "http://bank-zipkin.{{ .Release.Namespace }}.svc.cluster.local:9411/api/v2/spans"
+  resources:
+    limits:
+      memory: "1Gi"
+    requests:
+      memory: "512Mi"
 
 notifications-service:
   replicaCount: 1
@@ -46,20 +126,182 @@ notifications-service:
   ingress:
     enabled: true
     className: "nginx"
-    annotations: {}
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /$2
+      nginx.ingress.kubernetes.io/use-regex: "true"
     hosts:
-      - host: notifications-service.bank.local
+      - host: gateway-ingress.bank.local
         paths:
-          - path: /
+          - path: /notificationsService(/|$)(.*)
             pathType: ImplementationSpecific
     tls: [ ]
+  kafka:
+    url: "http://{{.Release.Name}}-kafka-broker-0.{{.Release.Name}}-kafka-broker-headless.{{.Release.Namespace}}.svc.cluster.local:9092"
+    #url: "http://bank-kafka.{{ .Release.Namespace }}.svc.cluster.local:9092"
   keycloak:
     issuer_uri: "http://bank-keycloak.{{ .Release.Namespace }}.svc.cluster.local:8080/realms/bank"
     token_uri: "http://bank-keycloak.{{ .Release.Namespace }}.svc.cluster.local:8080/realms/bank/protocol/openid-connect/token"
   config:
     database_url: "jdbc:postgresql://bank-db.{{ .Release.Namespace }}.svc.cluster.local:5432/bank"
     database_username: "bank"
+  zipkin:
+    url: "http://bank-zipkin.{{ .Release.Namespace }}.svc.cluster.local:9411/api/v2/spans"
+  resources:
+    limits:
+      memory: "1Gi"
+    requests:
+      memory: "512Mi"
 
+account-service:
+  replicaCount: 1
+  image:
+    repository: account-service
+    tag: "0.0.1-SNAPSHOT"
+    pullPolicy: IfNotPresent
+    # -----------------------------
+  service:
+    type: ClusterIP
+    port: 8083
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /$2
+      nginx.ingress.kubernetes.io/use-regex: "true"
+    hosts:
+      - host: gateway-ingress.bank.local
+        paths:
+          - path: /accountService(/|$)(.*)
+            pathType: ImplementationSpecific
+    tls: [ ]
+  kafka:
+    url: "http://{{.Release.Name}}-kafka-broker-0.{{.Release.Name}}-kafka-broker-headless.{{.Release.Namespace}}.svc.cluster.local:9092"
+    #url: "http://bank-kafka.{{ .Release.Namespace }}.svc.cluster.local:9092"
+  keycloak:
+    issuer_uri: "http://bank-keycloak.{{ .Release.Namespace }}.svc.cluster.local:8080/realms/bank"
+    token_uri: "http://bank-keycloak.{{ .Release.Namespace }}.svc.cluster.local:8080/realms/bank/protocol/openid-connect/token"
+  config:
+    database_url: "jdbc:postgresql://bank-db.{{ .Release.Namespace }}.svc.cluster.local:5432/bank"
+    database_username: "bank"
+  zipkin:
+    url: "http://bank-zipkin.{{ .Release.Namespace }}.svc.cluster.local:9411/api/v2/spans"
+  gateway:
+    service_url: "http://gateway-ingress.bank.local"
+  resources:
+    limits:
+      memory: "1Gi"
+    requests:
+      memory: "512Mi"
+
+cash-service:
+  replicaCount: 1
+  image:
+    repository: cash-service
+    tag: "0.0.1-SNAPSHOT"
+    pullPolicy: IfNotPresent
+    # -----------------------------
+  service:
+    type: ClusterIP
+    port: 8092
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /$2
+      nginx.ingress.kubernetes.io/use-regex: "true"
+    hosts:
+      - host: gateway-ingress.bank.local
+        paths:
+          - path: /cashervice(/|$)(.*)
+            pathType: ImplementationSpecific
+    tls: [ ]
+  kafka:
+    url: "http://{{.Release.Name}}-kafka-broker-0.{{.Release.Name}}-kafka-broker-headless.{{.Release.Namespace}}.svc.cluster.local:9092"
+    #url: "http://bank-kafka.{{ .Release.Namespace }}.svc.cluster.local:9092"
+  keycloak:
+    issuer_uri: "http://bank-keycloak.{{ .Release.Namespace }}.svc.cluster.local:8080/realms/bank"
+    token_uri: "http://bank-keycloak.{{ .Release.Namespace }}.svc.cluster.local:8080/realms/bank/protocol/openid-connect/token"
+  gateway:
+    service_url: "http://gateway-ingress.bank.local"
+  zipkin:
+    url: "http://bank-zipkin.{{ .Release.Namespace }}.svc.cluster.local:9411/api/v2/spans"
+  resources:
+    limits:
+      memory: "1Gi"
+    requests:
+      memory: "512Mi"
+
+transfer-application:
+  replicaCount: 1
+  image:
+    repository: transfer-application
+    tag: "0.0.1-SNAPSHOT"
+    pullPolicy: IfNotPresent
+    # -----------------------------
+  service:
+    type: ClusterIP
+    port: 8093
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /$2
+      nginx.ingress.kubernetes.io/use-regex: "true"
+    hosts:
+      - host: gateway-ingress.bank.local
+        paths:
+          - path: /transferservice(/|$)(.*)
+            pathType: ImplementationSpecific
+    tls: [ ]
+  kafka:
+    url: "http://{{.Release.Name}}-kafka-broker-0.{{.Release.Name}}-kafka-broker-headless.{{.Release.Namespace}}.svc.cluster.local:9092"
+    #url: "http://bank-kafka.{{ .Release.Namespace }}.svc.cluster.local:9092"
+  keycloak:
+    issuer_uri: "http://bank-keycloak.{{ .Release.Namespace }}.svc.cluster.local:8080/realms/bank"
+    token_uri: "http://bank-keycloak.{{ .Release.Namespace }}.svc.cluster.local:8080/realms/bank/protocol/openid-connect/token"
+  gateway:
+    service_url: "http://gateway-ingress.bank.local"
+  zipkin:
+    url: "http://bank-zipkin.{{ .Release.Namespace }}.svc.cluster.local:9411/api/v2/spans"
+  resources:
+    limits:
+      memory: "1Gi"
+    requests:
+      memory: "512Mi"
+
+bank-ui:
+  replicaCount: 1
+  image:
+    repository: bank-ui
+    tag: "0.0.1-SNAPSHOT"
+    pullPolicy: IfNotPresent
+    # -----------------------------
+  service:
+    type: ClusterIP
+    port: 8080
+  keycloak:
+    issuer_uri: "http://bank-keycloak.{{ .Release.Namespace }}.svc.cluster.local:8080/realms/bank"
+    token_uri: "http://bank-keycloak.{{ .Release.Namespace }}.svc.cluster.local:8080/realms/bank/protocol/openid-connect/token"
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+    hosts:
+      - host: bank.bank.local
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+    tls: [ ]
+  gateway:
+    service_url: "http://gateway-ingress.bank.local"
+  zipkin:
+    url: "http://zipkin.{{ .Release.Namespace }}.svc.cluster.local:9411/api/v2/spans"
+  resources:
+    limits:
+      memory: "1Gi"
+    requests:
+      memory: "512Mi"
 
 db:
   enabled: true
@@ -107,3 +349,326 @@ keycloak:
   extraEnvVars:
     - name: KEYCLOAK_EXTRA_ARGS
       value: --import-realm
+
+kafka:
+  enabled: true
+  clusterId: "bank-kafka-cluster"
+  auth:
+    password: "12345"
+    interBrokerUser: "broker"
+    interBrokerPassword: "12345"
+  controller:
+    replicaCount: 1
+    automountServiceAccountToken: true
+    containerSecurityContext:
+      seLinuxOptions: {}
+    config: {}
+  broker:
+    replicaCount: 1
+    persistence:
+      size: 1Gi
+    automountServiceAccountToken: true
+    containerSecurityContext:
+      seLinuxOptions: {}
+    config: {}
+  zookeeper:
+    enabled: false
+  kraft:
+    enabled: true
+    mode: combined
+  listeners:
+    client:
+      protocol: PLAINTEXT
+    controller:
+      protocol: PLAINTEXT
+    interbroker:
+      protocol: PLAINTEXT
+  externalAccess:
+    enabled: true
+    broker:
+      service:
+        type: ClusterIP
+        ports:
+          external: 9094
+        domain: ingress-ip
+    controller:
+      service:
+        type: ClusterIP
+        ports:
+          external: 9094
+        domain: ingress-ip
+  configuration:
+    controllerQuorumVoters: |
+      1@bank-kafka-controller-0-external.default.svc.cluster.local:9094
+  tls:
+    autoGenerated:
+      enabled: true
+      engine: helm
+      certManager:
+        enabled: false
+  provisioning:
+    containerSecurityContext:
+      seLinuxOptions: {}
+  metrics:
+    jmx:
+      containerSecurityContext:
+        seLinuxOptions: {}
+
+zipkin:
+  enabled: true
+  storageType: mem
+  cassandra:
+    enabled: false
+  self-tracing:
+    enabled: false
+
+kube-prometheus:
+  additionalPrometheusRulesMap:
+    custom-alerts:
+      groups:
+        - name: bank-transfer-failure-alerts
+          rules:
+            - alert: HighFailedTransferAttempts
+              expr: increase(bank_operation_transfer_errors_total[1m]) > 2
+              for: 1m
+              labels:
+                severity: warning
+              annotations:
+                summary: "Частые неуспешные переводы от пользователя {{ $labels.from_login }}"
+                description: "Пользователь {{ $labels.from_login }} совершил более 2 неуспешных переводов за последнюю минуту"
+
+        - name: user-login-alerts
+          rules:
+            - alert: HighFailedLogins
+              expr: sum(user_login_total{status="failure"}) by (login) > 3
+              for: 1m
+              labels:
+                severity: warning
+              annotations:
+                summary: "Слишком большое количество попыток входа для пользователя {{ $labels.login }}"
+                description: "Пользователь {{ $labels.login }} неудачно пытался войти более 3 раз за последнюю минуту"
+
+        - name: bank-ui-rates-duration
+          rules:
+            - alert: HighLatencyBankUIRates
+              expr: max_over_time(bank_ui_get_rates_duration_seconds_max[1m]) > 0.1
+              for: 2m
+              labels:
+                severity: warning
+              annotations:
+                summary: "Высокая задержка при получении курсов валют в UI"
+                description: "Максимальное время получения курсов превышает 0.1 секунды в течение 1 минуты"
+
+        - name: blocker-operation-check
+          rules:
+            - alert: HighOperationBlocking
+              expr: rate(blocker_operation[5m]) > 0.1
+              for: 2m
+              labels:
+                severity: warning
+              annotations:
+                summary: "Высокая частота блокировки операций"
+                description: "Частота блокировки операций превышает 0.1 в минуту в течение более 2 минут — возможно нештатная ситуация"
+
+        - name: currency-rates-check-get
+          rules:
+            - alert: CurrencyRatesNotUpdated
+              expr: increase(currency_rates_get_total[1m]) < 1
+              for: 1m
+              labels:
+                severity: critical
+              annotations:
+                summary: "Сервис не получает Курсы валют более минуты"
+                description: "Сервис не получает Курсы валют более минуты — проверьте Kafka"
+
+        - name: currency-rates-check-send
+          rules:
+            - alert: CurrencyRatesNotUpdated
+              expr: increase(currency_rates_send_error_total[1m]) > 0
+              for: 1m
+              labels:
+                severity: critical
+              annotations:
+                summary: "Не удалось отправить Курсы валют"
+                description: "Не удалось отправить Курсы валют в течении более минуты"
+  prometheus:
+    additionalScrapeConfigs:
+      accounts-service:
+        job_name: 'account-service'
+        metrics_path: '/actuator/prometheus'
+        scrape_interval: 5s
+        static_configs:
+          - targets: [ 'bank-account-service.{{ .Release.Namespace }}.svc.cluster.local:80' ]
+            labels:
+              application: 'accounts-service'
+      bank-ui:
+        job_name: 'bank-ui'
+        metrics_path: '/actuator/prometheus'
+        scrape_interval: 5s
+        static_configs:
+          - targets: [ 'bank-bank-ui.{{ .Release.Namespace }}.svc.cluster.local:80' ]
+            labels:
+              application: 'bank-ui'
+      blocker-service:
+        job_name: 'blocker-service'
+        metrics_path: '/actuator/prometheus'
+        scrape_interval: 5s
+        static_configs:
+          - targets: [ 'bank-blocker-service.{{ .Release.Namespace }}.svc.cluster.local:80' ]
+            labels:
+              application: 'blocker-service'
+      cash-service:
+        job_name: 'cash-service'
+        metrics_path: '/actuator/prometheus'
+        scrape_interval: 5s
+        static_configs:
+          - targets: [ 'bank-cash-service.{{ .Release.Namespace }}.svc.cluster.local:80' ]
+            labels:
+              service: 'cash-service'
+      exchange-generator-service:
+        job_name: 'exchange-generator-service'
+        metrics_path: '/actuator/prometheus'
+        scrape_interval: 5s
+        static_configs:
+          - targets: [ 'bank-exchange-generator-service.{{ .Release.Namespace }}.svc.cluster.local:8091' ]
+            labels:
+              service: 'exchange-generator-service'
+      exchange-service:
+        job_name: 'exchange-service'
+        metrics_path: '/actuator/prometheus'
+        scrape_interval: 5s
+        static_configs:
+          - targets: [ 'bank-exchange-service.{{ .Release.Namespace }}.svc.cluster.local:80' ]
+            labels:
+              service: 'exchange-service'
+      notifications-service:
+        job_name: 'notifications-service'
+        metrics_path: '/actuator/prometheus'
+        scrape_interval: 5s
+        static_configs:
+          - targets: [ 'bank-notifications-service.{{ .Release.Namespace }}.svc.cluster.local:80' ]
+            labels:
+              service: 'notifications-service'
+      transfer-service:
+        job_name: 'transfer-service'
+        metrics_path: '/actuator/prometheus'
+        scrape_interval: 5s
+        static_configs:
+          - targets: [ 'bank-transfer-service.{{ .Release.Namespace }}.svc.cluster.local:80' ]
+            labels:
+              application: 'transfer-service'
+    enableEndpointSlice: true
+    prometheusSpec:
+      serviceMonitorSelector: {}
+      podMonitorSelector: {}
+  grafana:
+    enabled: true
+    adminPassword: "admin"
+    service:
+      type: ClusterIP
+  prometheus-node-exporter:
+    hostRootFsMount:
+      enabled: false
+
+
+kibana:
+  elasticsearchHosts: "http://bank-elasticsearch.{{ .Release.Namespace }}.svc.cluster.local:9200"
+  elasticsearch:
+    ssl:
+      enabled: false
+  automountToken: false
+  service:
+    type: NodePort
+    nodePort: 32000
+  replicaCount: 1
+
+
+logstash:
+  esJavaOpts: "-Xmx1g -Xms1g"
+  logstashPipeline:
+    monitoring.conf: |
+      input {
+        kafka {
+          bootstrap_servers => "${KAFKA_BOOTSTRAP_SERVERS}"
+          topics => ["logs-topic"]
+          group_id => "logstash-group"
+          consumer_threads => 1
+        }
+      }
+      
+      filter {
+          mutate {
+            gsub => [
+              "message", "\n", "",
+              "message", "  +", " "
+            ]
+        }
+      
+        grok {
+          match => {
+            "message" => [
+                # https://www.javainuse.com/grok
+                # Паттерн для основных логов с traceId и spanId
+                "^%{TIMESTAMP_ISO8601:timestamp}\s\[%{DATA:thread}\]\s%{LOGLEVEL:level}\s%{DATA:logger}\s\-\s%{DATA:traceId}\:%{DATA:spanId}\s%{DATA:service_name}\s%{GREEDYDATA:message}",
+      
+                # Паттерн для логов без traceId/spanId
+                "^%{TIMESTAMP_ISO8601:timestamp}\s\[%{DATA:thread}\]\s%{LOGLEVEL:level}\s%{DATA:logger}\s%{GREEDYDATA:message}"
+            ]
+          }
+          tag_on_failure => ["_grokparsefailure"]
+        }
+      
+        if "_grokparsefailure" in [tags] {
+          mutate {
+            add_tag => "failed_grok"
+          }
+        }
+      
+        date {
+          match => [ "timestamp", "yyyy-MM-dd HH:mm:ss.SSS" ]
+          target => "@timestamp"
+        }
+      }
+
+      output {
+        elasticsearch {
+          hosts => ["http://bank-elasticsearch.{{ .Release.Namespace }}.svc.cluster.local:9200"]
+          index => "logs-%{+YYYY.MM.dd}"
+          retry_on_conflict => 3
+          action => "index"
+        }
+
+        stdout {
+          codec => rubydebug {
+            metadata => true
+          }
+        }
+      }
+elasticsearch:
+  protocol: http
+  createCert: false
+  esJavaOpts: "-Xmx1g -Xms1g"
+  clusterHealthCheckParams: ""
+  tls:
+    enabled: false
+  masterService: "elasticsearch"
+  sysctlInitContainer:
+    enabled: true
+
+  replicas: 1
+  rbac:
+    create: false
+  esConfig:
+    elasticsearch.yml: |
+      cluster.name: bank-cluster
+      node.name: node-1
+      network.host: 0.0.0.0
+      discovery.seed_hosts: ["127.0.0.1"]
+      discovery.type: single-node
+      bootstrap.memory_lock: true
+      path.data: /usr/share/elasticsearch/data
+      path.logs: /usr/share/elasticsearch/logs
+      xpack.security.enabled: false
+      xpack.security.transport.ssl.enabled: false
+      xpack.security.http.ssl.enabled: false
+      xpack.security.authc.token.enabled: false
