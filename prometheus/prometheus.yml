@@ -1,0 +1,67 @@
+rule_files:
+  - "/etc/prometheus/alerting_rules.yml"
+
+scrape_configs:
+  - job_name: 'account-service'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ 'account-service:8083' ]
+        labels:
+          application: 'account-service'
+
+  - job_name: 'bank-ui'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ 'bank-ui:8080' ]
+        labels:
+          application: 'bank-ui'
+
+  - job_name: 'blocker-service'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ 'blocker-service:8085' ]
+        labels:
+          application: 'blocker-service'
+
+  - job_name: 'cash-service'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ 'cash-service:8092' ]
+        labels:
+          application: 'cash-service'
+
+  - job_name: 'exchange-generator-service'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ 'exchange-generator-service:8091' ]
+        labels:
+          application: 'exchange-generator-service'
+
+  - job_name: 'exchange-service'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ 'exchange-service:8087' ]
+        labels:
+          application: 'exchange-service'
+
+  - job_name: 'notifications-service'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ 'notifications-service:8081' ]
+        labels:
+          application: 'notifications-service'
+
+  - job_name: 'transfer-service'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ 'transfer-service:8093' ]
+        labels:
+          application: 'transfer-service'
