@@ -22,14 +22,8 @@ import java.util.Random;
 public class RatesGenerationService {
 
     private static final Logger log = LoggerFactory.getLogger(RatesGenerationService.class);
-
-    @Autowired
     private final ExchangeService exchangeService;
-
-    @Autowired
     private final ExchangeProducer exchangeProducer;
-
-    @Autowired
     private final MeterRegistry meterRegistry;
 
     @Value("${metricsEnabled:true}")

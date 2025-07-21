@@ -1,5 +1,8 @@
 package org.example.transferservice.configurations;
 
+import lombok.RequiredArgsConstructor;
+import io.micrometer.tracing.Span;
+import io.micrometer.tracing.Tracer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,46 +15,45 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.web.client.RestClient;
 
 @Configuration
+@RequiredArgsConstructor
 public class GateWayConfig {
 
-    @Value("${bank.gateway}")
+    private final Tracer tracer;
+    @Value("${ya-bank.gateway}")
     private String gatewayUrl;
-
     @Value("${spring.security.oauth2.client.registration.service-client.client-id}")
     private String clientId;
-
     @Value("${spring.security.oauth2.client.registration.service-client.client-secret}")
     private String clientSecret;
-
     @Value("${spring.security.oauth2.client.provider.keycloak.token-uri}")
     private String tokenUri;
 
-    static private String ACCOUNT_SERVICE = "accountservice";
+    static private String ACCOUNT_APPLICATION = "accountsapplication";
 
-    static private String BLOCKER_SERVICE = "blockerservice";
+    static private String BLOCKER_APPLICATION = "blockerapplication";
 
-    static private String NOTIFICATIONS_SERVICE = "notificationsservice";
+    static private String NOTIFICATIONS_APPLICATION = "notificationsapplication";
 
-    static private String EXCHANGE_SERVICE = "exchangeservice";
+    static private String EXCHANGE_APPLICATION = "exchangeApplication";
 
     @Bean
     public String notificationsUrl() {
-        return gatewayUrl + "/" + NOTIFICATIONS_SERVICE + "/notifications";
+        return gatewayUrl + "/" + NOTIFICATIONS_APPLICATION + "/notifications";
     }
 
     @Bean
     public String accountApplicationUrl() {
-        return gatewayUrl + "/" + ACCOUNT_SERVICE;
+        return gatewayUrl + "/" + ACCOUNT_APPLICATION;
     }
 
     @Bean
     public String blockerApplicationUrl() {
-        return gatewayUrl + "/" + BLOCKER_SERVICE + "/blocker";
+        return gatewayUrl + "/" + BLOCKER_APPLICATION + "/blocker";
     }
 
     @Bean
     public String exchangeApplicationUrl() {
-        return gatewayUrl + "/" + EXCHANGE_SERVICE +"/exchange";
+        return gatewayUrl + "/" + EXCHANGE_APPLICATION +"/exchange";
     }
 
     @Bean
@@ -87,13 +89,28 @@ public class GateWayConfig {
         return manager;
     }
 
+    public final String buildTraceParent(String traceId,String spanId) {
+        return String.format("00-%s-%s-01", traceId, spanId);
+    }
+
     @Bean
     public RestClient restClient(OAuth2AuthorizedClientManager authorizedClientManager) {
         OAuth2ClientHttpRequestInterceptor requestInterceptor =
                 new OAuth2ClientHttpRequestInterceptor(authorizedClientManager);
         requestInterceptor.setClientRegistrationIdResolver(request -> "oauth-yabank");
         return RestClient.builder()
-                .requestInterceptor(requestInterceptor)
+                .requestInterceptor((request, body, execution) -> {
+                    Span currentSpan = tracer.currentSpan();
+                    if (currentSpan != null) {
+                        String traceParent = buildTraceParent(
+                                currentSpan.context().traceId(),
+                                currentSpan.context().spanId()
+                        );
+                        request.getHeaders().set("traceparent", traceParent);
+                    }
+
+                    return requestInterceptor.intercept(request, body, execution);
+                })
                 .build();
     }
 

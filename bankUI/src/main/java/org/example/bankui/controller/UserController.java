@@ -1,5 +1,7 @@
 package org.example.bankui.controller;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import lombok.RequiredArgsConstructor;
 import org.example.bankui.request.AccountOperation;
 import org.example.bankui.request.AccountRequest;
 import org.example.bankui.request.ChangePasswordRequest;
@@ -9,7 +11,7 @@ import org.example.bankui.response.UserResponse;
 import org.example.bankui.service.AccountService;
 import org.example.bankui.service.CashService;
 import org.example.bankui.service.TransferService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,20 +27,18 @@ import java.security.Principal;
 import java.util.List;
 
 @Controller
+@RequiredArgsConstructor
 @RequestMapping("/user")
 public class UserController {
 
-    @Autowired
-    private AccountService accountService;
+    private final AccountService accountService;
+    private final CashService cashService;
+    private final TransferService transferService;
+    private final MainController mainController;
+    private final MeterRegistry meterRegistry;
 
-    @Autowired
-    private CashService cashService;
-
-    @Autowired
-    private TransferService transferService;
-
-    @Autowired
-    private MainController mainController;
+    @Value("${metricsEnabled:true}")
+    private boolean metricsEnabled;
 
     @PostMapping("/{login}/editPassword")
     @Secured("ROLE_USER")
@@ -88,23 +88,23 @@ public class UserController {
             return "redirect:/logout";
         }
 
-        UserResponse userResponse = getCurrentUser();
-        if (userResponse == null) {
+        UserResponse userDto = getCurrentUser();
+        if (userDto == null) {
             return "redirect:/logout";
         }
 
         UserResponse changeUser = UserResponse.builder()
                 .fio(name)
                 .dateOfBirth(birthDate)
-                .login(userResponse.getLogin())
-                .email(userResponse.getEmail())
+                .login(userDto.getLogin())
+                .email(userDto.getEmail())
                 .build();
 
         HttpResponseDto httpResponseDto = accountService.changeInfo(changeUser);
         if (httpResponseDto.getStatusCode().equals("0")) {
             model.addAttribute("userIsUpdated", true);
-            userResponse.setFio(name);
-            userResponse.setDateOfBirth(birthDate);
+            userDto.setFio(name);
+            userDto.setDateOfBirth(birthDate);
         } else {
             model.addAttribute("userAccountsErrors",
                     List.of("Ошибка при обновлении данных " + httpResponseDto.getStatusMessage()));
@@ -190,8 +190,8 @@ public class UserController {
             @RequestParam(name = "to_login") String toLogin,
             @RequestParam double value,
             Model model) {
-
-        TransferOperation response = TransferOperation.builder()
+        // Подготовка DTO для перевода
+        TransferOperation transferOperationDto = TransferOperation.builder()
                 .fromLogin(login)
                 .toLogin(toLogin)
                 .fromCurrency(fromCurrency)
@@ -199,16 +199,27 @@ public class UserController {
                 .amount(value)
                 .build();
 
-        HttpResponseDto httpResponseDto = transferService.transfer(response);
+        HttpResponseDto httpResponseDto = transferService.transfer(transferOperationDto);
 
         if ("0".equals(httpResponseDto.getStatusCode())) {
-            if (response.getToLogin().equals(response.getFromLogin())) {
+            if (transferOperationDto.getToLogin().equals(transferOperationDto.getFromLogin())) {
                 model.addAttribute("transferIsOK", true);
             } else {
                 model.addAttribute("transferOtherIsOK", true);
             }
         } else {
-            if (response.getToLogin().equals(response.getFromLogin())) {
+            if (metricsEnabled) {
+                meterRegistry.counter("bank_operation_transfer_errors_total",
+                                "from_login", transferOperationDto.getFromLogin(),
+                                "to_login", transferOperationDto.getToLogin(),
+                                "from_currency", transferOperationDto.getFromCurrency(),
+                                "to_currency", transferOperationDto.getToCurrency(),
+                                "type", transferOperationDto.getToLogin().equals(transferOperationDto.getFromLogin()) ? "own" : "external",
+                                "reason", httpResponseDto.getStatusMessage())
+                        .increment();
+            }
+
+            if (transferOperationDto.getToLogin().equals(transferOperationDto.getFromLogin())) {
                 model.addAttribute("transferErrors",
                         List.of("Ошибка операции: " + httpResponseDto.getStatusMessage()));
             } else {
@@ -219,5 +230,4 @@ public class UserController {
 
         return mainController.mainPage(model);
     }
-
 }

@@ -1,11 +1,13 @@
 package org.example.bankui.controller;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.example.bankui.response.HttpResponseDto;
 import org.example.bankui.response.UserResponse;
 import org.example.bankui.service.AccountService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.StandardPasswordEncoder;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -20,14 +22,19 @@ import java.util.List;
 import java.util.Map;
 
 @Controller
+@RequiredArgsConstructor
 public class LoginController {
 
-    @Autowired
-    private AccountService accountService;
+    private final MeterRegistry meterRegistry;
+
+    @Value("${metricsEnabled:true}")
+    private boolean metricsEnabled;
+
+    private final AccountService accountService;
 
     @GetMapping("/login")
     public String showLoginPage() {
-        return "login";
+        return "login"; // Возвращает шаблон login.html
     }
 
     @GetMapping("/logout")
@@ -35,7 +42,8 @@ public class LoginController {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication != null) {
-            SecurityContextHolder.clearContext();
+            System.out.println("Выход пользователя: " + authentication.getName());
+            SecurityContextHolder.clearContext(); // Очищаем контекст безопасности
         }
 
         var session = request.getSession(false);
@@ -43,12 +51,13 @@ public class LoginController {
             session.invalidate();
         }
 
+        // Перенаправляем на главную страницу или страницу входа
         return "redirect:/login?logout";
     }
 
     @GetMapping("/signup")
     public String showSignupPage() {
-        return "signup";
+        return "signup"; // Возвращает шаблон login.html
     }
 
     @PostMapping("/signup")
@@ -71,7 +80,9 @@ public class LoginController {
             errors.add("Пароли не совпадают");
         }
 
+        // Если есть ошибки, возвращаем форму регистрации с сообщениями об ошибках
         if (!errors.isEmpty()) {
+            if (metricsEnabled) meterRegistry.counter("user_login", "login", login, "status", "failure").increment();
             attributes.put("errors", errors);
             model.addAllAttributes(attributes);
             return "signup";
@@ -90,12 +101,14 @@ public class LoginController {
         HttpResponseDto httpResponseDto = accountService.registerUser(userDto);
 
         if (!httpResponseDto.getStatusCode().equals("0")) {
+            if (metricsEnabled) meterRegistry.counter("user_login", "login", login, "status", "failure").increment();
             errors.add(httpResponseDto.getStatusMessage());
             attributes.put("errors", errors);
             model.addAllAttributes(attributes);
             return "signup";
         }
 
+        if (metricsEnabled) meterRegistry.counter("user_login", "login", login, "status", "success").increment();
         return "redirect:/login?registeredSuccess";
     }
 }
